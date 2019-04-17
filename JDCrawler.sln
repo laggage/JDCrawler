@@ -5,6 +5,10 @@ VisualStudioVersion = 15.0.28307.572
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JDCrawler.Core", "JDCrawler.Core\JDCrawler.Core.csproj", "{B3EF272E-937F-4E0D-87F6-AC89D2486B80}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JDCrawler.Console", "JDCrawler.Console\JDCrawler.Console.csproj", "{DE00811A-7C99-4A2B-B9B7-FEC844DF5159}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JDCrawler.Infrastructure", "JDCrawler.Database\JDCrawler.Infrastructure.csproj", "{3B29DDDE-9D1A-4663-8EFE-4781DF44D9A6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{B3EF272E-937F-4E0D-87F6-AC89D2486B80}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B3EF272E-937F-4E0D-87F6-AC89D2486B80}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B3EF272E-937F-4E0D-87F6-AC89D2486B80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE00811A-7C99-4A2B-B9B7-FEC844DF5159}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE00811A-7C99-4A2B-B9B7-FEC844DF5159}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE00811A-7C99-4A2B-B9B7-FEC844DF5159}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE00811A-7C99-4A2B-B9B7-FEC844DF5159}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3B29DDDE-9D1A-4663-8EFE-4781DF44D9A6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3B29DDDE-9D1A-4663-8EFE-4781DF44D9A6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3B29DDDE-9D1A-4663-8EFE-4781DF44D9A6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3B29DDDE-9D1A-4663-8EFE-4781DF44D9A6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
