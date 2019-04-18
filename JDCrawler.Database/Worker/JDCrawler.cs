@@ -18,10 +18,12 @@ namespace JDCrawler.Infrastructure.Worker
         public const string JDSearchBaseUrl = "https://search.jd.com/Search";
         public const string JDCommodityItemBaseUrl = "https://item.jd.com/{0}.html";
 
-        public static IEnumerable<Mobile> SearchMobile(int pageStartIndex = 1,int pageCount = 1)
+        private static MobileRepository _mobileRepository = new MobileRepository();
+
+        public static IEnumerable<Mobile> SearchMobile(int pageStartIndex = 1, int pageCount = 1)
         {
             List<Mobile> mobiles = new List<Mobile>();
-            for (int i = pageStartIndex;i < pageCount+1;i++)
+            for (int i = pageStartIndex; i < pageCount + 1; i++)
                 mobiles.AddRange(GetMobileByPage(pageStartIndex));
             return mobiles;
         }
@@ -31,10 +33,9 @@ namespace JDCrawler.Infrastructure.Worker
             foreach (Commodity commodity in commodities)
             {
                 Console.WriteLine("商品编号 : " + commodity.CommodityId);
-                Console.WriteLine("商品名称 : "+commodity.Name);
+                Console.WriteLine("商品名称 : " + commodity.Name);
                 Console.WriteLine("商品描述 : " + commodity.Description);
-                Console.WriteLine("价格 : "+commodity.Price);
-                Console.WriteLine("店铺 : "+commodity.Seller.Name + "\r\n\r\n");
+                Console.WriteLine("价格 : " + commodity.Price);
             }
         }
 
@@ -47,13 +48,16 @@ namespace JDCrawler.Infrastructure.Worker
                 Console.WriteLine("商品名称 : " + m.Name);
                 Console.WriteLine("商品描述 : " + m.Description);
                 Console.WriteLine("商品产地 : " + m.Origin);
+                Console.WriteLine("店铺Guid : " + m.Seller.Guid);
                 Console.WriteLine("店铺 : " + m.Seller.Name);
-                Console.WriteLine("拿到数据时间 : " + m.RecoredTime.ToString("YY-mm-dd HH-MM-ss"));
+                Console.WriteLine("拿到数据时间 : " + m.RecoredTime.ToString("yy-mm-dd HH-MM-ss"));
                 Console.WriteLine("价格 : " + m.Price);
                 Console.WriteLine("手机品牌 : " + m.Brand);
                 Console.WriteLine("手机型号: " + m.ModelNumber);
+                Console.WriteLine("CPU型号 : " + m.CPUModelNumber);
+                Console.WriteLine("CPU核心数 : " + m.CPUCoreNumber);
                 Console.WriteLine("手机ROM : " + m.ROM);
-                Console.WriteLine("手机RAM : " + m.RAM );
+                Console.WriteLine("手机RAM : " + m.RAM);
                 Console.WriteLine("上市时间 : " + m.MarketTime.ToString("yy年 MM月") + "\r\n\r\n");
             }
         }
@@ -79,6 +83,8 @@ namespace JDCrawler.Infrastructure.Worker
 
         private static Mobile CreateMobile(HtmlNode itemNode)
         {
+            MobileRepository rep = new MobileRepository();
+
             Mobile m = new Mobile()
             {
                 Guid = Guid.NewGuid(),
@@ -101,7 +107,12 @@ namespace JDCrawler.Infrastructure.Worker
             string shopName = wrapNode
                 .SelectSingleNode("./div[@class='p-shop']//a[@class='curr-shop']")
                 ?.Attributes["title"]?.Value;
-            m.Seller = MobileRepository.Instance.GetShopByName(shopName) ?? new Shop { Name = shopName };
+            m.Seller = rep.GetShopByName(shopName) ?? new Shop
+            {
+                Guid = Guid.NewGuid(),
+                Name = shopName
+            };
+            rep.Dispose();
 
             LoadMobileInfo(m);
             return m;
@@ -117,7 +128,7 @@ namespace JDCrawler.Infrastructure.Worker
                     "//ul[@class='parameter2 p-parameter-list']/li");
                 HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(
                     "//div[@class='Ptable-item']");
-                
+
                 //商品介绍 - 商品名称
                 m.Name = simpleInfoNodes.FirstOrDefault(
                         n => n.InnerText.Contains("商品名称"))
@@ -149,7 +160,7 @@ namespace JDCrawler.Infrastructure.Worker
                     ?.FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "上市月份")
                     ?.SelectSingleNode("./dd[last()]")
                     ?.InnerText.Replace("月", ""), out int month);
-                m.MarketTime = new DateTime(year, month <=0||month>12?1:month, 1);
+                m.MarketTime = new DateTime(year, month <= 0 || month > 12 ? 1 : month, 1);
 
                 //存储 - ROM
                 HtmlNode storageInfoNode = nodes.FirstOrDefault(
@@ -162,6 +173,19 @@ namespace JDCrawler.Infrastructure.Worker
                     ?.SelectSingleNode("./dd[last()]").InnerText.Replace("GB", ""), out int ram);
                 m.ROM = rom;
                 m.RAM = ram;
+
+                // 主芯片 - CPU型号
+                HtmlNode cpuNode = nodes.FirstOrDefault(
+                    n => n.SelectSingleNode("./h3").InnerText == "主芯片");
+                m.CPUModelNumber = cpuNode?.SelectNodes(".//dl[@class='clearfix']")
+                       ?.FirstOrDefault(
+                           n => n.SelectSingleNode("./dt").InnerText == "CPU型号")
+                       ?.SelectSingleNode("./dd[last()]").InnerText;
+                // 主芯片 - CPU核心数
+                m.CPUCoreNumber = cpuNode?.SelectNodes(".//dl[@class='clearfix']")
+                    ?.FirstOrDefault(
+                        n => n.SelectSingleNode("./dt").InnerText == "CPU核数")
+                    ?.SelectSingleNode("./dd[last()]").InnerText;
 
                 s.Close();
             }
@@ -188,8 +212,8 @@ namespace JDCrawler.Infrastructure.Worker
                 new HtmlDocument()
             };
             for (int i = 0; i < doc.Length; i++)
-                doc[i].Load(stream[i],Encoding.UTF8);
-            
+                doc[i].Load(stream[i], Encoding.UTF8);
+
 
             HtmlNodeCollection[] commoditiesLists = new HtmlNodeCollection[]
             {
@@ -235,12 +259,12 @@ namespace JDCrawler.Infrastructure.Worker
                 "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3";
             req.UserAgent =
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36";
-            
+
             return req;
         }
 
-        private static HttpWebRequest CreateSearchRequest(string searchKey,int timeout,
-            int pageIndex,bool scrolling = false)
+        private static HttpWebRequest CreateSearchRequest(string searchKey, int timeout,
+            int pageIndex, bool scrolling = false)
         {
             string requestUrl = SetUrlParameters(JDSearchBaseUrl, new Dictionary<string, string>
             {
@@ -257,7 +281,7 @@ namespace JDCrawler.Infrastructure.Worker
                 "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3";
             request.UserAgent =
                 "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36";
-            
+
             if (scrolling)
             {
                 request.Headers.Add("s", "48");

@@ -44,8 +44,11 @@
     <Reference Include="HtmlAgilityPack, Version=1.11.2.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.11.2\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
-    <Reference Include="MySql.Data, Version=6.9.8.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
-      <HintPath>..\packages\ztools.other.MySql.Data.6.9.8\lib\net45\MySql.Data.dll</HintPath>
+    <Reference Include="MySql.Data, Version=6.9.12.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.6.9.12\lib\net45\MySql.Data.dll</HintPath>
+    </Reference>
+    <Reference Include="MySql.Data.Entity.EF6, Version=6.9.12.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\MySql.Data.Entity.6.9.12\lib\net45\MySql.Data.Entity.EF6.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
@@ -60,10 +63,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Database\MobilesContext.cs" />
-    <Compile Include="Database\UnitOfWork.cs" />
-    <Compile Include="Migrations\201904180520449_Initilize.cs" />
-    <Compile Include="Migrations\201904180520449_Initilize.Designer.cs">
-      <DependentUpon>201904180520449_Initilize.cs</DependentUpon>
+    <Compile Include="Migrations\201904181451348_InitDatabase.cs" />
+    <Compile Include="Migrations\201904181451348_InitDatabase.Designer.cs">
+      <DependentUpon>201904181451348_InitDatabase.cs</DependentUpon>
     </Compile>
     <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -81,8 +83,8 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
-    <EmbeddedResource Include="Migrations\201904180520449_Initilize.resx">
-      <DependentUpon>201904180520449_Initilize.cs</DependentUpon>
+    <EmbeddedResource Include="Migrations\201904181451348_InitDatabase.resx">
+      <DependentUpon>201904181451348_InitDatabase.cs</DependentUpon>
     </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

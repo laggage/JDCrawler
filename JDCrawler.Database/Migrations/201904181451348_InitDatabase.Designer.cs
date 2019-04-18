@@ -7,13 +7,13 @@ namespace JDCrawler.Infrastructure.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.2.0-61023")]
-    public sealed partial class Initilize : IMigrationMetadata
+    public sealed partial class InitDatabase : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(Initilize));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(InitDatabase));
         
         string IMigrationMetadata.Id
         {
-            get { return "201904180520449_Initilize"; }
+            get { return "201904181451348_InitDatabase"; }
         }
         
         string IMigrationMetadata.Source

@@ -1,4 +1,6 @@
 ﻿using JDCrawler.Core.Models;
+using JDCrawler.Infrastructure.Database;
+using JDCrawler.Infrastructure.Repository;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,11 +14,20 @@ namespace JDCrawler.Console
     {
         static void Main(string[] args)
         {
-           List<Mobile> mobiles = Crawler.SearchMobile(1,5).ToList();
+           List<Mobile> mobiles = Crawler.SearchMobile(2,15).ToList();
            System.Console.WriteLine("共找到:{0}数据", mobiles.Count);
            Crawler.DisplayMobiles(mobiles);
 
-            System.Console.ReadKey();
+           //foreach (Shop s in MobileRepository.Instance.GetShops())
+           
+           MobileRepository rep = new MobileRepository();
+           rep.AddMobiles(mobiles);
+            
+          // UnitOfWork.Instance.SaveChanges();
+           System.Console.WriteLine("数据保存成功!");
+            
+
+           System.Console.ReadKey();
         }
     }
 }

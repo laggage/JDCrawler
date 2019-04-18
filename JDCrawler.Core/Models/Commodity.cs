@@ -22,8 +22,7 @@ namespace JDCrawler.Core.Models
         /// </summary>
         public DateTime RecoredTime { get; set; }
 
-        public virtual CommodityType CommodityType { get; set; }
+        public Guid SellerGuid { get; set; }
         public virtual Shop Seller { get; set; }
-
     }
 }

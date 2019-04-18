@@ -10,6 +10,9 @@ namespace JDCrawler.Infrastructure.Migrations
         public Configuration()
         {
             AutomaticMigrationsEnabled = false;
+            SetSqlGenerator("MySql.Data.MySqlClient",
+                new MySql.Data.Entity.MySqlMigrationSqlGenerator());
+            CodeGenerator = new MySql.Data.Entity.MySqlMigrationCodeGenerator();
         }
 
         protected override void Seed(JDCrawler.Infrastructure.Database.MobilesContext context)

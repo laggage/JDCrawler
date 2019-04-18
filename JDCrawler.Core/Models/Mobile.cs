@@ -22,7 +22,7 @@ namespace JDCrawler.Core.Models
         /// <summary>
         /// CPU核心数
         /// </summary>
-        public int CPUCoreNumber { get; set; }
+        public string CPUCoreNumber { get; set; }
         /// <summary>
         /// 电池容量
         /// </summary>
@@ -33,5 +33,6 @@ namespace JDCrawler.Core.Models
         /// 上市时间
         /// </summary>
         public DateTime MarketTime { get; set; }
+
     }
 }
