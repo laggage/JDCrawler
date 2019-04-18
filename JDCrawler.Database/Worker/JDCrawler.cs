@@ -1,11 +1,11 @@
 ﻿using HtmlAgilityPack;
 using JDCrawler.Core.Models;
+using JDCrawler.Infrastructure.Repository;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Sockets;
 using System.Text;
 using System.Threading.Tasks;
 using System.Web;
@@ -30,7 +30,7 @@ namespace JDCrawler.Infrastructure.Worker
         {
             foreach (Commodity commodity in commodities)
             {
-                Console.WriteLine("商品ID : " + commodity.Id);
+                Console.WriteLine("商品编号 : " + commodity.CommodityId);
                 Console.WriteLine("商品名称 : "+commodity.Name);
                 Console.WriteLine("商品描述 : " + commodity.Description);
                 Console.WriteLine("价格 : "+commodity.Price);
@@ -42,11 +42,13 @@ namespace JDCrawler.Infrastructure.Worker
         {
             foreach (Mobile m in mobiles)
             {
-                Console.WriteLine("商品ID : " + m.Id);
+                Console.WriteLine("Guid : " + m.Guid.ToString());
+                Console.WriteLine("商品编号 : " + m.CommodityId);
                 Console.WriteLine("商品名称 : " + m.Name);
                 Console.WriteLine("商品描述 : " + m.Description);
                 Console.WriteLine("商品产地 : " + m.Origin);
                 Console.WriteLine("店铺 : " + m.Seller.Name);
+                Console.WriteLine("拿到数据时间 : " + m.RecoredTime.ToString("YY-mm-dd HH-MM-ss"));
                 Console.WriteLine("价格 : " + m.Price);
                 Console.WriteLine("手机品牌 : " + m.Brand);
                 Console.WriteLine("手机型号: " + m.ModelNumber);
@@ -77,10 +79,14 @@ namespace JDCrawler.Infrastructure.Worker
 
         private static Mobile CreateMobile(HtmlNode itemNode)
         {
-            Mobile m = new Mobile();
-            m.Id= itemNode.Attributes["data-sku"].Value;
+            Mobile m = new Mobile()
+            {
+                Guid = Guid.NewGuid(),
+                RecoredTime = DateTime.Now
+            };
+            m.CommodityId = itemNode.Attributes["data-sku"].Value;
 
-            HtmlNode wrapNode = 
+            HtmlNode wrapNode =
                 itemNode.SelectSingleNode("./div[@class='gl-i-wrap']");
 
             m.Description = wrapNode
@@ -95,7 +101,7 @@ namespace JDCrawler.Infrastructure.Worker
             string shopName = wrapNode
                 .SelectSingleNode("./div[@class='p-shop']//a[@class='curr-shop']")
                 ?.Attributes["title"]?.Value;
-            m.Seller = new Shop {Name = shopName};
+            m.Seller = MobileRepository.Instance.GetShopByName(shopName) ?? new Shop { Name = shopName };
 
             LoadMobileInfo(m);
             return m;
@@ -103,7 +109,7 @@ namespace JDCrawler.Infrastructure.Worker
 
         public static void LoadMobileInfo(Mobile m)
         {
-            using (Stream s = CreateCommodityInfoRequest(m.Id).GetResponse().GetResponseStream())
+            using (Stream s = CreateCommodityInfoRequest(m.CommodityId).GetResponse().GetResponseStream())
             {
                 HtmlDocument doc = new HtmlDocument();
                 doc.Load(s, Encoding.GetEncoding("GB2312"));

@@ -44,6 +44,9 @@
     <Reference Include="HtmlAgilityPack, Version=1.11.2.0, Culture=neutral, PublicKeyToken=bd319b19eaf3b43a, processorArchitecture=MSIL">
       <HintPath>..\packages\HtmlAgilityPack.1.11.2\lib\Net45\HtmlAgilityPack.dll</HintPath>
     </Reference>
+    <Reference Include="MySql.Data, Version=6.9.8.0, Culture=neutral, PublicKeyToken=c5687fc88969c44d, processorArchitecture=MSIL">
+      <HintPath>..\packages\ztools.other.MySql.Data.6.9.8\lib\net45\MySql.Data.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.ComponentModel.DataAnnotations" />
     <Reference Include="System.Core" />
@@ -58,6 +61,11 @@
   <ItemGroup>
     <Compile Include="Database\MobilesContext.cs" />
     <Compile Include="Database\UnitOfWork.cs" />
+    <Compile Include="Migrations\201904180520449_Initilize.cs" />
+    <Compile Include="Migrations\201904180520449_Initilize.Designer.cs">
+      <DependentUpon>201904180520449_Initilize.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Migrations\Configuration.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Repository\MobileRepository.cs" />
     <Compile Include="Worker\JDCrawler.cs" />
@@ -71,6 +79,11 @@
       <Project>{b3ef272e-937f-4e0d-87f6-ac89d2486b80}</Project>
       <Name>JDCrawler.Core</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Migrations\201904180520449_Initilize.resx">
+      <DependentUpon>201904180520449_Initilize.cs</DependentUpon>
+    </EmbeddedResource>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

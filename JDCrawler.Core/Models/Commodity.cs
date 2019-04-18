@@ -1,11 +1,14 @@
-﻿namespace JDCrawler.Core.Models
+﻿using System;
+
+namespace JDCrawler.Core.Models
 {
     /// <summary>
     /// 商品信息
     /// </summary>
     public abstract class Commodity
     {
-        public string Id { get; set; }
+        public Guid Guid { get; set; }
+        public string CommodityId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         /// <summary>
@@ -14,6 +17,10 @@
         public string Origin { get; set; }
 
         public decimal Price { get; set; }
+        /// <summary>
+        /// 拿到商品信息的时间
+        /// </summary>
+        public DateTime RecoredTime { get; set; }
 
         public virtual CommodityType CommodityType { get; set; }
         public virtual Shop Seller { get; set; }

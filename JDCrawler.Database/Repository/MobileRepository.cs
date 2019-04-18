@@ -7,9 +7,8 @@ namespace JDCrawler.Infrastructure.Repository
 {
     public class MobileRepository
     {
-        private MobileRepository _instance;
-
-        public MobileRepository Instance
+        private static MobileRepository _instance;
+        public static MobileRepository Instance
         {
             get
             {
@@ -38,6 +37,18 @@ namespace JDCrawler.Infrastructure.Repository
         {
             if (string.IsNullOrEmpty(id)) throw new ArgumentNullException(nameof(id));
             return _ctx.Mobiles.FirstOrDefault(m => m.Equals(id));
+        }
+
+        public Shop GetShopByName(string shopName)
+        {
+            try
+            {
+                return _ctx.Shops.FirstOrDefault(s => s.Name == shopName);
+            }
+            catch(Exception)
+            {
+                return null;
+            }
         }
     }
 }

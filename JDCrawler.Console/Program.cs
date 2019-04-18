@@ -12,7 +12,7 @@ namespace JDCrawler.Console
     {
         static void Main(string[] args)
         {
-           List<Mobile> mobiles = Crawler.SearchMobile(1,10).ToList();
+           List<Mobile> mobiles = Crawler.SearchMobile(1,5).ToList();
            System.Console.WriteLine("共找到:{0}数据", mobiles.Count);
            Crawler.DisplayMobiles(mobiles);
 

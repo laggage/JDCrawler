@@ -1,11 +1,13 @@
-﻿namespace JDCrawler.Core.Models
+﻿using System;
+
+namespace JDCrawler.Core.Models
 {
     /// <summary>
     /// 代表京东店铺
     /// </summary>
     public class Shop
     {
-        public string Id { get; set; }
+        public Guid Guid { get; set; }
         public string Name { get; set; }
     }
 }
