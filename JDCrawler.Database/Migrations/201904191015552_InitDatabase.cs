@@ -26,27 +26,39 @@ namespace JDCrawler.Infrastructure.Migrations
                         Origin = c.String(unicode: false),
                         Price = c.Decimal(nullable: false, precision: 18, scale: 2),
                         RecoredTime = c.DateTime(nullable: false, precision: 0),
-                        SellerGuid = c.Guid(nullable: false),
                     })
-                .PrimaryKey(t => t.Guid)                
-                .ForeignKey("Shop", t => t.SellerGuid, cascadeDelete: true)
-                .Index(t => t.SellerGuid);
+                .PrimaryKey(t => t.Guid)                ;
             
             CreateTable(
                 "Shop",
                 c => new
                     {
-                        Guid = c.Guid(nullable: false),
-                        Name = c.String(unicode: false),
+                        Name = c.String(nullable: false, maxLength: 128, storeType: "nvarchar"),
                     })
-                .PrimaryKey(t => t.Guid)                ;
+                .PrimaryKey(t => t.Name)                ;
+            
+            CreateTable(
+                "ShopMobiles",
+                c => new
+                    {
+                        ShopName = c.String(nullable: false, maxLength: 128, storeType: "nvarchar"),
+                        MobileGuid = c.Guid(nullable: false),
+                    })
+                .PrimaryKey(t => new { t.ShopName, t.MobileGuid })                
+                .ForeignKey("Shop", t => t.ShopName, cascadeDelete: true)
+                .ForeignKey("Mobile", t => t.MobileGuid, cascadeDelete: true)
+                .Index(t => t.ShopName)
+                .Index(t => t.MobileGuid);
             
         }
         
         public override void Down()
         {
-            DropForeignKey("Mobile", "SellerGuid", "Shop");
-            DropIndex("Mobile", new[] { "SellerGuid" });
+            DropForeignKey("ShopMobiles", "MobileGuid", "Mobile");
+            DropForeignKey("ShopMobiles", "ShopName", "Shop");
+            DropIndex("ShopMobiles", new[] { "MobileGuid" });
+            DropIndex("ShopMobiles", new[] { "ShopName" });
+            DropTable("ShopMobiles");
             DropTable("Shop");
             DropTable("Mobile");
         }

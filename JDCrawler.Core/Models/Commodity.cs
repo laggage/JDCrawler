@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace JDCrawler.Core.Models
 {
@@ -22,7 +23,6 @@ namespace JDCrawler.Core.Models
         /// </summary>
         public DateTime RecoredTime { get; set; }
 
-        public Guid SellerGuid { get; set; }
-        public virtual Shop Seller { get; set; }
+        public virtual ICollection<Shop> Shops { get; set; }
     }
 }

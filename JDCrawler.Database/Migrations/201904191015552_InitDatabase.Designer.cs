@@ -13,7 +13,7 @@ namespace JDCrawler.Infrastructure.Migrations
         
         string IMigrationMetadata.Id
         {
-            get { return "201904181451348_InitDatabase"; }
+            get { return "201904191015552_InitDatabase"; }
         }
         
         string IMigrationMetadata.Source

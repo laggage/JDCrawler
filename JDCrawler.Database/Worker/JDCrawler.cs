@@ -1,5 +1,6 @@
 ﻿using HtmlAgilityPack;
 using JDCrawler.Core.Models;
+using JDCrawler.Infrastructure.Entensions;
 using JDCrawler.Infrastructure.Repository;
 using System;
 using System.Collections.Generic;
@@ -18,12 +19,10 @@ namespace JDCrawler.Infrastructure.Worker
         public const string JDSearchBaseUrl = "https://search.jd.com/Search";
         public const string JDCommodityItemBaseUrl = "https://item.jd.com/{0}.html";
 
-        private static MobileRepository _mobileRepository = new MobileRepository();
-
         public static IEnumerable<Mobile> SearchMobile(int pageStartIndex = 1, int pageCount = 1)
         {
             List<Mobile> mobiles = new List<Mobile>();
-            for (int i = pageStartIndex; i < pageCount + 1; i++)
+            for (int i = pageStartIndex; i < pageCount + pageStartIndex; i++)
                 mobiles.AddRange(GetMobileByPage(pageStartIndex));
             return mobiles;
         }
@@ -48,8 +47,8 @@ namespace JDCrawler.Infrastructure.Worker
                 Console.WriteLine("商品名称 : " + m.Name);
                 Console.WriteLine("商品描述 : " + m.Description);
                 Console.WriteLine("商品产地 : " + m.Origin);
-                Console.WriteLine("店铺Guid : " + m.Seller.Guid);
-                Console.WriteLine("店铺 : " + m.Seller.Name);
+                //Console.WriteLine("店铺Guid : " + m.Shops[].Guid);
+                //Console.WriteLine("店铺 : " + m.Seller.Name);
                 Console.WriteLine("拿到数据时间 : " + m.RecoredTime.ToString("yy-mm-dd HH-MM-ss"));
                 Console.WriteLine("价格 : " + m.Price);
                 Console.WriteLine("手机品牌 : " + m.Brand);
@@ -81,10 +80,13 @@ namespace JDCrawler.Infrastructure.Worker
             return result;
         }
 
+        /// <summary>
+        /// Create a Mobile instance according to <param name="itemNode"/>
+        /// </summary>
+        /// <param name="itemNode">a html node contains mobile item info</param>
+        /// <returns></returns>
         private static Mobile CreateMobile(HtmlNode itemNode)
         {
-            MobileRepository rep = new MobileRepository();
-
             Mobile m = new Mobile()
             {
                 Guid = Guid.NewGuid(),
@@ -103,93 +105,90 @@ namespace JDCrawler.Infrastructure.Worker
                 wrapNode.SelectSingleNode(
                     "./div[@class='p-price']/strong/i")?.InnerText, out decimal price);
             m.Price = price;
-
+            //Get shop
             string shopName = wrapNode
-                .SelectSingleNode("./div[@class='p-shop']//a[@class='curr-shop']")
-                ?.Attributes["title"]?.Value;
-            m.Seller = rep.GetShopByName(shopName) ?? new Shop
+                .SelectSingleNode("./div[@class='p-shop']//a")
+                ?.InnerText ?? string.Empty;
+            (m.Shops = m.Shops ?? new List<Shop>()).Add(new Shop
             {
-                Guid = Guid.NewGuid(),
                 Name = shopName
-            };
-            rep.Dispose();
+            });
 
             LoadMobileInfo(m);
             return m;
         }
 
+
+        /// <summary>
+        /// get mobile detail info according to Mobile.CommodityId
+        /// </summary>
+        /// <param name="m"></param>
         public static void LoadMobileInfo(Mobile m)
         {
-            using (Stream s = CreateCommodityInfoRequest(m.CommodityId).GetResponse().GetResponseStream())
+            using (HttpWebResponse res = (HttpWebResponse)CreateCommodityInfoRequest(m.CommodityId).GetResponse())
             {
-                HtmlDocument doc = new HtmlDocument();
-                doc.Load(s, Encoding.GetEncoding("GB2312"));
-                HtmlNodeCollection simpleInfoNodes = doc.DocumentNode.SelectNodes(
-                    "//ul[@class='parameter2 p-parameter-list']/li");
-                HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(
-                    "//div[@class='Ptable-item']");
+                using (Stream s = res.GetResponseStream())
+                {
+                    HtmlDocument doc = new HtmlDocument();
+                    doc.Load(s, Encoding.GetEncoding("GB2312"));
+                    HtmlNodeCollection simpleInfoNodes = doc.DocumentNode.SelectNodes(
+                        "//ul[@class='parameter2 p-parameter-list']/li");
+                    HtmlNodeCollection nodes = doc.DocumentNode.SelectNodes(
+                        "//div[@class='Ptable-item']");
 
-                //商品介绍 - 商品名称
-                m.Name = simpleInfoNodes.FirstOrDefault(
-                        n => n.InnerText.Contains("商品名称"))
-                    ?.Attributes["title"].Value;
-                //商品介绍 - 商品产地
-                m.Origin = simpleInfoNodes.FirstOrDefault(
-                        n => n.InnerText.Contains("商品产地"))
-                    ?.Attributes["title"].Value;
+                    //商品介绍 - 商品名称
+                    m.Name = simpleInfoNodes?.FirstOrDefault(
+                            n => n.InnerText.Contains("商品名称"))
+                        ?.Attributes["title"].Value;
+                    //商品介绍 - 商品产地
+                    m.Origin = simpleInfoNodes?.FirstOrDefault(
+                            n => n.InnerText.Contains("商品产地"))
+                        ?.Attributes["title"].Value;
 
-                //主体 - 品牌
-                HtmlNode mainNode = nodes.FirstOrDefault(
-                    node => node.SelectSingleNode("./h3").InnerText == "主体");
-                m.Brand = mainNode?.SelectNodes(".//dl[@class='clearfix']")
-                    .FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "品牌")
-                    ?.SelectSingleNode("./dd[last()]")
-                    ?.InnerText;
-                //主体 - 型号
-                m.ModelNumber = mainNode.SelectNodes(".//dl[@class='clearfix']")
-                    ?.FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "型号")
-                    ?.SelectSingleNode("./dd[last()]")
-                    ?.InnerText;
-                //主体 - 上市年份
-                int.TryParse(mainNode.SelectNodes(".//dl[@class='clearfix']")
-                    ?.FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "上市年份")
-                    ?.SelectSingleNode("./dd[last()]")
-                    ?.InnerText.Replace("年", ""), out int year);
-                //主体 - 上市月份
-                int.TryParse(mainNode.SelectNodes(".//dl[@class='clearfix']")
-                    ?.FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "上市月份")
-                    ?.SelectSingleNode("./dd[last()]")
-                    ?.InnerText.Replace("月", ""), out int month);
-                m.MarketTime = new DateTime(year, month <= 0 || month > 12 ? 1 : month, 1);
+                    //主体 - 品牌
+                    m.Brand = GetMobileInfo(nodes, "主体", "品牌");
+                    //主体 - 型号
+                    m.ModelNumber = GetMobileInfo(nodes, "主体", "型号");
+                    //主体 - 上市年份
+                    int year = GetMobileInfo(nodes, "主体", "上市年份").ToInt();
+                    year = year == 0 ? DateTime.Now.Year:year;
+                    //主体 - 上市月份
+                    int month = GetMobileInfo(nodes, "主体", "上市月份").ToInt();
+                    month = month == 0 ? DateTime.Now.Month:month;
+                    m.MarketTime = new DateTime(year, month <= 0 || month > 12 ? 1 : month, 1);
 
-                //存储 - ROM
-                HtmlNode storageInfoNode = nodes.FirstOrDefault(
-                    n => n.SelectSingleNode("./h3").InnerText == "存储");
-                int.TryParse(storageInfoNode.SelectNodes(".//dl[@class='clearfix']")
-                    .FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "ROM")
-                    ?.SelectSingleNode("./dd[last()]").InnerText.Replace("GB", ""), out int rom);
-                int.TryParse(storageInfoNode.SelectNodes(".//dl[@class='clearfix']")
-                    .FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == "RAM")
-                    ?.SelectSingleNode("./dd[last()]").InnerText.Replace("GB", ""), out int ram);
-                m.ROM = rom;
-                m.RAM = ram;
+                    //存储 - ROM
+                    m.ROM = GetMobileInfo(nodes, "存储", "ROM").ToInt();
+                    m.RAM = GetMobileInfo(nodes, "存储", "RAM").ToInt();
 
-                // 主芯片 - CPU型号
-                HtmlNode cpuNode = nodes.FirstOrDefault(
-                    n => n.SelectSingleNode("./h3").InnerText == "主芯片");
-                m.CPUModelNumber = cpuNode?.SelectNodes(".//dl[@class='clearfix']")
-                       ?.FirstOrDefault(
-                           n => n.SelectSingleNode("./dt").InnerText == "CPU型号")
-                       ?.SelectSingleNode("./dd[last()]").InnerText;
-                // 主芯片 - CPU核心数
-                m.CPUCoreNumber = cpuNode?.SelectNodes(".//dl[@class='clearfix']")
-                    ?.FirstOrDefault(
-                        n => n.SelectSingleNode("./dt").InnerText == "CPU核数")
-                    ?.SelectSingleNode("./dd[last()]").InnerText;
+                    // 主芯片 - CPU型号
+                    m.CPUModelNumber = GetMobileInfo(nodes, "主芯片", "CPU型号");
+                    m.CPUCoreNumber = GetMobileInfo(nodes, "主芯片", "CPU核数");
+                    //电池信息 - 电池容量
+                    m.BatteryCapacity = GetMobileInfo(nodes, "电池信息", "电池容量（mAh）").ToInt();
 
-                s.Close();
+                    s.Close();
+                }
+                res.Close();
             }
         }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="infoCollection">div[class='ptable-item']</param>
+        /// <param name="infoType"></param>
+        /// <param name="infoKey"></param>
+        /// <returns></returns>
+        private static string GetMobileInfo(HtmlNodeCollection infoCollection,string infoType,string infoKey)
+        {
+            HtmlNode destinationNode = infoCollection.FirstOrDefault(
+                n => n.SelectSingleNode("./h3").InnerText == infoType);
+            return destinationNode.SelectNodes(".//dl[@class='clearfix']")
+                ?.FirstOrDefault(n => n.SelectSingleNode("./dt").InnerText == infoKey)
+                ?.SelectSingleNode("./dd[last()]").InnerText??string.Empty;
+        }
+
 
         /// <summary>
         /// 获取某一页的手机信息
@@ -199,13 +198,17 @@ namespace JDCrawler.Infrastructure.Worker
         private static IEnumerable<Mobile> GetMobileByPage(int pageIndex = 1)
         {
             int n = 2 * pageIndex - 1;
-
+            HttpWebResponse[] response =
+            {
+                (HttpWebResponse)CreateSearchRequest(SearchKey, 100 * 1000, n, false).GetResponse(),
+                (HttpWebResponse)CreateSearchRequest(SearchKey, 100 * 1000, n + 1, true).GetResponse()
+            };
+            
             Stream[] stream =
             {
-                CreateSearchRequest(SearchKey, 100 * 1000, n).GetResponse().GetResponseStream(),
-                CreateSearchRequest(SearchKey, 100 * 1000, n + 1, true).GetResponse().GetResponseStream()
+                response[0].GetResponseStream(),
+                response[1].GetResponseStream()
             };
-
             HtmlDocument[] doc = new HtmlDocument[2]
             {
                 new HtmlDocument(),
@@ -213,7 +216,6 @@ namespace JDCrawler.Infrastructure.Worker
             };
             for (int i = 0; i < doc.Length; i++)
                 doc[i].Load(stream[i], Encoding.UTF8);
-
 
             HtmlNodeCollection[] commoditiesLists = new HtmlNodeCollection[]
             {
@@ -225,28 +227,26 @@ namespace JDCrawler.Infrastructure.Worker
             {
                 new List<Mobile>(),
                 new List<Mobile>(),
-                new List<Mobile>()
             };
             Parallel.For(0, commoditiesLists.Length, i =>
              {
                  mobileLists[i].AddRange(commoditiesLists[i].Select(node => CreateMobile(node)).ToList());
              });
-
-            mobileLists[2].AddRange(mobileLists[0]);
-            mobileLists[2].AddRange(mobileLists[1]);
-            //foreach (HtmlNodeCollection nodeCollection in commoditiesLists)
-            //{
-            //    mobileLists[2].AddRange(nodeCollection.Select(
-            //        node => CreateMobile(node)));
-            //}
-
+            //put all data in mobileLists[0]
+            mobileLists[0].AddRange(mobileLists[1]);
+            //clean up resource
             foreach (Stream s in stream)
             {
                 s.Close();
                 s.Dispose();
             }
+            foreach (HttpWebResponse r in response)
+            {
+                r.Close();
+                r.Dispose();
+            }
 
-            return mobileLists[2];
+            return mobileLists[0];
         }
 
         private static HttpWebRequest CreateCommodityInfoRequest(string itemId)
@@ -270,7 +270,7 @@ namespace JDCrawler.Infrastructure.Worker
             {
                 {"keyword", HttpUtility.UrlEncode(searchKey, Encoding.UTF8).ToUpper()},
                 {"enc", "utf-8"},
-                {"page","1" }
+                {"page",pageIndex.ToString() }
             });
             HttpWebRequest request = WebRequest.Create(requestUrl) as HttpWebRequest;
             if (request == null)
@@ -284,7 +284,7 @@ namespace JDCrawler.Infrastructure.Worker
 
             if (scrolling)
             {
-                request.Headers.Add("s", "48");
+                //request.Headers.Add("s", "48");
                 request.Headers.Add("scrolling", "y");
             }
             request.Timeout = timeout;

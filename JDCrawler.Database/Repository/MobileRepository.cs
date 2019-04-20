@@ -10,7 +10,7 @@ namespace JDCrawler.Infrastructure.Repository
     public class MobileRepository:IDisposable
     {
         private MobilesContext _ctx;
-
+       
         public MobileRepository()
         {
             _ctx = new MobilesContext();
@@ -24,14 +24,31 @@ namespace JDCrawler.Infrastructure.Repository
 
         public void AddMobiles(IEnumerable<Mobile> mobiles)
         {
-            mobiles.Select(m =>
+            List<Shop> shops = mobiles.Select(m => m.Shops)
+                .SelectMany(s => s.ToList())
+                .ToList();
+            List<Shop> originShops = _ctx.Shops.ToList();
+            shops = shops.Distinct(new ShopComparer()).ToList();
+
+            mobiles = mobiles.Select(m =>
             {
-                Shop s = GetShopById(m.Seller.Guid);
-                if(s != null)
-                    m.Seller = s;
+                m.Shops = m.Shops?.Select(s =>
+                {
+                    Shop orginShop = originShops.FirstOrDefault(ss => ss.Name == s.Name);
+                    if (orginShop == null)   //orginShop can't find in database
+                        orginShop = shops.FirstOrDefault(ss => ss.Name == s.Name);
+                    else
+                        shops.Remove(s);
+                        
+                    return orginShop;
+                }).ToList()??m.Shops;
                 return m;
-            });
+            }).ToList();
+
             _ctx.Mobiles.AddRange(mobiles);
+            IEnumerable<Shop> sss = _ctx.Shops.Local.ToList();
+            IEnumerable<Mobile> mmm = _ctx.Mobiles.Local.ToList();
+            
             _ctx.SaveChanges();
         }
 
@@ -53,27 +70,27 @@ namespace JDCrawler.Infrastructure.Repository
             }
         }
 
-        public Shop GetShopById(Guid id)
-        {
-            return _ctx.Shops.ToList().FirstOrDefault(s => s.Guid == id);
-        }
+        //public void AddShop(Shop shop)
+        //{
+        //    _ctx.Shops.Add(shop);
+        //}
 
-        public Shop AddShopByName(string shopName, bool saveChanges = false)
-        {
-            Shop newShop = new Shop
-            {
-                Guid = Guid.NewGuid(),
-                Name = shopName
-            };
-            _ctx.Shops.Add(newShop);
-            _ctx.SaveChanges();
-            return newShop;
-        }
+        //public Shop AddShopByName(string shopName, bool saveChanges = false)
+        //{
+        //    Shop newShop = new Shop
+        //    {
+        //        Name = shopName
+        //    };
+        //    _ctx.Shops.Add(newShop);
+        //    if(saveChanges == true)
+        //        _ctx.SaveChanges();
+        //    return newShop;
+        //}
 
-        public IEnumerable<Shop> GetShops()
-        {
-            return _ctx.Shops.ToList();
-        }
+        //public IEnumerable<Shop> GetShops()
+        //{
+        //    return _ctx.Shops.ToList();
+        //}
 
         public void Dispose()
         {

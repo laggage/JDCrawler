@@ -8,39 +8,24 @@ namespace JDCrawler.Core.Models
     /// </summary>
     public class Shop
     {
-        public Guid Guid { get; set; }
         public string Name { get; set; }
 
         public virtual ICollection<Mobile> Mobiles { get; set; }
+    }
 
-        public bool Equals(Shop shop)
+    public class ShopComparer : IEqualityComparer<Shop>
+    {
+        public bool Equals(Shop x, Shop y)
         {
-            if (shop == null) return false;
-            if (ReferenceEquals(shop, this)) return true;
-            if (GetHashCode() != shop.GetHashCode()) return false;
-            return Guid.Equals(shop.Guid);
+            if (ReferenceEquals(x, null) || ReferenceEquals(y, null))
+                return false;
+            
+            return x.Name == y.Name;
         }
 
-        public override bool Equals(object obj)
+        public int GetHashCode(Shop obj)
         {
-            if (ReferenceEquals(obj, null)) return false;
-
-            return Equals((Shop)obj);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode()^Guid.GetHashCode();
-        }
-
-        public static bool operator ==(Shop left, Shop right)
-        {
-            return left.Equals(right);
-        }
-
-        public static bool operator !=(Shop left, Shop right)
-        {
-            return !(left == right);
+            return this.GetHashCode() ^ obj.Name.GetHashCode();
         }
     }
 }
